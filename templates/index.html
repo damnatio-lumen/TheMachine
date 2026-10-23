@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>THE MACHINE // Camera Identification</title>
+  <link rel="icon" href="/static/assets/machine-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/machine.css">
+</head>
+<body>
+  <div class="scanline" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand"><img src="/static/assets/machine-mark.svg" alt=""><div><strong>THE MACHINE</strong><span>CAMERA IDENTIFICATION SYSTEM</span></div></div>
+    <nav class="main-nav" aria-label="Modes">
+      <button class="nav-tab active" data-view="live">LIVE FEED</button>
+      <button class="nav-tab" data-view="snapshot">SNAPSHOT</button>
+      <button class="nav-tab" data-view="registry">ASSET REGISTRY</button>
+    </nav>
+    <div class="top-meta"><span id="clock">--:--:--</span><span class="local-pill">LOCAL NODE</span><span id="systemLed" class="led offline"></span><span id="systemState">STANDBY</span></div>
+  </header>
+
+  <main class="shell">
+    <aside class="left-rail">
+      <section class="panel camera-list-panel">
+        <div class="panel-heading"><span>CAMERA SOURCE</span><span class="tiny-code">CAM / 01</span></div>
+        <div class="camera-source selected"><span class="source-icon">▣</span><div><b id="sourceTitle">LOCAL CAMERA</b><small id="cameraState">OFFLINE</small></div><span class="status-dot" id="cameraLed"></span></div>
+        <label class="field-label" for="cameraIndex">DEVICE INDEX</label>
+        <select id="cameraIndex" class="field"><option value="0">Camera 0 · Default</option><option value="1">Camera 1</option><option value="2">Camera 2</option></select>
+        <button id="startCamera" class="btn btn-primary full">▶ INITIALIZE CAMERA</button>
+        <div class="source-divider"><span>OR USE A LOCAL VIDEO FILE</span></div>
+        <label class="field-label" for="videoFile">VIDEO FILE</label>
+        <input id="videoFile" class="field file-field" type="file" accept="video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,.mp4,.m4v,.mov,.avi,.mkv,.webm,.mpg,.mpeg">
+        <button id="uploadVideo" class="btn btn-quiet full">＋ ADD VIDEO SOURCE</button>
+        <label class="field-label" for="videoSource">SAVED VIDEO SOURCES</label>
+        <select id="videoSource" class="field"><option value="">No video files saved</option></select>
+        <div class="video-source-actions"><button id="startVideo" class="btn btn-yellow full" disabled>▶ PLAY SELECTED VIDEO</button><button id="deleteVideo" class="btn btn-quiet full" disabled>REMOVE</button></div>
+        <button id="stopCamera" class="btn btn-quiet full" disabled>■ STOP FEED</button>
+        <p class="micro-note">Video files are copied into data/videos and processed locally. Upload limit: 512 MB.</p>
+      </section>
+
+      <section class="panel legend-panel">
+        <div class="panel-heading"><span>RETICLE LEGEND</span><span class="tiny-code">COLORS</span></div>
+        <div class="legend-row"><i class="legend-square gray"></i><span>UNCLASSIFIED</span><em>DEFAULT</em></div>
+        <div class="legend-row"><i class="legend-square yellow"></i><span>ADMIN</span><em>MANUAL</em></div>
+        <div class="legend-row"><i class="legend-square red"></i><span>THREAT</span><em>MANUAL</em></div>
+        <div class="legend-row"><i class="legend-square white-red"></i><span>VIOLENCE INDICATOR</span><em>MANUAL</em></div>
+        <div class="legend-row"><i class="legend-square blue"></i><span>ASSET</span><em>MANUAL</em></div>
+        <p class="micro-note">Colors are operator-set labels, never automatic identity or risk judgments. Known profiles must be linked manually; no facial biometrics are compared.</p>
+      </section>
+
+      <section class="panel telemetry-panel">
+        <div class="panel-heading"><span>VISION TELEMETRY</span><span class="tiny-code">LOCAL</span></div>
+        <div class="metric"><span>DETECTOR</span><b id="detectorStatus">READY</b></div>
+        <div class="metric"><span>VISIBLE FACES</span><b id="faceCount">00</b></div>
+        <div class="metric"><span>TRACK MODE</span><b>SESSION ONLY</b></div>
+        <div class="metric"><span>BIOMETRIC ENGINE</span><b id="biometricModelStatus" class="muted">MODEL NOT INSTALLED</b></div>
+        <div class="biometric-control-box">
+          <label class="biometric-toggle"><input id="biometricEnabled" type="checkbox" disabled><span>ENABLE MATCHING FOR OPTED-IN PROFILES</span></label>
+          <label class="field-label" for="biometricThreshold">COSINE SIMILARITY THRESHOLD <output id="thresholdValue">0.40</output></label>
+          <input id="biometricThreshold" class="range-field" type="range" min="0.30" max="0.70" step="0.01" value="0.40" disabled>
+          <div class="range-ends"><span>0.30 · MORE PERMISSIVE</span><span>0.70 · STRICTER</span></div>
+          <p class="micro-note">Scores are similarity values, not probabilities. Calibrate with consenting participants and representative lighting.</p>
+        </div>
+        <div class="metric"><span>ENROLLED ASSETS</span><b id="biometricEnrolledCount">00</b></div>
+        <div class="metric"><span>PENDING SAMPLE REVIEWS</span><b id="biometricPendingCount">00</b></div>
+      </section>
+
+      <div class="left-bottom"><span class="pulse"></span> PRIVATE LOCAL SESSION<br><small>NO CLOUD SERVICES</small></div>
+    </aside>
+
+    <section class="main-stage">
+      <div class="view-heading">
+        <div><div class="eyebrow">VISUAL ACQUISITION / <span id="modeCode">01</span></div><h1 id="viewTitle">LIVE IDENTIFICATION</h1></div>
+        <div class="heading-actions"><span class="recording-state"><i class="status-dot"></i><span id="streamState">STANDBY</span></span><button id="captureBtn" class="btn btn-yellow" disabled>▣ CAPTURE SNAPSHOT</button></div>
+      </div>
+
+      <section class="view-page active" id="view-live">
+        <div class="feed-frame">
+          <div class="feed-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="feed-topline"><span>CAM-LOCAL-01 / FRONTAL FACE DETECTION</span><span id="feedTimestamp">NO SIGNAL</span></div>
+          <div class="feed-screen" id="feedScreen">
+            <div id="noSignal" class="no-signal"><div class="no-signal-mark"><span></span><span></span><span></span><span></span></div><strong>NO VIDEO SIGNAL</strong><p>Select a webcam or load a local video file to begin face detection.</p><small>PROCESSING REMAINS ON THIS COMPUTER</small></div>
+            <img id="videoFeed" alt="Live camera feed with face detection reticles" hidden>
+            <div class="feed-bottomline"><span id="feedFaceSummary">NO TRACKS</span><span id="detectorLabel">DETECTION / HAAR CASCADE</span><span>LOCAL TIME</span></div>
+          </div>
+        </div>
+        <div class="lower-grid">
+          <section class="panel selected-panel">
+            <div class="panel-heading"><span>SELECTED TRACK</span><span class="tiny-code" id="selectedTrackLabel">NONE</span></div>
+            <div id="emptySelection" class="empty-selection"><span class="reticle-small">＋</span><div><b>NO SUBJECT SELECTED</b><p>Choose a detected face to register it, link a saved profile, or begin cooperative enrollment.</p></div></div>
+            <div id="selectionDetails" class="selection-details" hidden>
+              <div class="selection-status"><span class="status-chip gray" id="selectedClassChip">UNCLASSIFIED</span><span class="selected-alias" id="selectedAlias">Unclassified track</span></div>
+              <div class="metric"><span>TRACK ID</span><b id="selectedTrackId">—</b></div>
+              <div class="metric"><span>PROFILE LINK</span><b id="selectedProfileId">NONE</b></div>
+              <div class="selection-actions"><button id="registerBtn" class="btn btn-primary">＋ REGISTER NEW ASSET</button><button id="unbindBtn" class="btn btn-quiet">CLEAR MANUAL / BIOMETRIC LINK</button><button id="enrollBiometricsBtn" class="btn btn-yellow" disabled>ENROLL COOPERATIVE SAMPLES</button></div>
+              <p class="micro-note">Cooperative enrollment captures up to five face samples for a saved, opted-in profile. Ask the participant to face the camera and gently turn left and right.</p>
+              <div class="link-existing-panel">
+                <div class="link-existing-heading"><span>BIOMETRIC RELOCK / PROFILE LINK</span><span class="tiny-code">OPT-IN MATCHING</span></div>
+                <input id="trackAssetSearch" class="field" type="search" autocomplete="off" placeholder="Search saved asset to relink to this track…" aria-label="Search saved profiles to manually relink to the selected track">
+                <div id="trackAssetResults" class="track-asset-results"><div class="quiet-empty">Load registered profiles to search.</div></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel detected-panel">
+            <div class="panel-heading"><span>DETECTED FACES</span><span class="tiny-code">EPHEMERAL TRACKS</span></div>
+            <div id="detectedFaces" class="detected-faces"><div class="quiet-empty">Waiting for a camera feed…</div></div>
+          </section>
+        </div>
+        <div class="operator-note"><span class="note-symbol">i</span><span>Unmatched faces use the <b>gray reticle</b>. Automatic biometric matching is available only for profiles with explicit participant opt-in and saved templates. Unknown faces are never assigned an identity or threat label.</span></div>
+      </section>
+
+      <section class="view-page" id="view-snapshot">
+        <div class="snapshot-workspace">
+          <div class="snapshot-left panel">
+            <div class="panel-heading"><span>SNAPSHOT ACQUISITION</span><span class="tiny-code">STILL FRAME</span></div>
+            <div class="snapshot-preview" id="snapshotPreview"><div class="snapshot-placeholder">Select a detected face in Live Feed, then press <b>CAPTURE SNAPSHOT</b>.</div><img id="latestSnapshot" alt="Latest snapshot" hidden></div>
+            <div class="snapshot-metadata" id="snapshotMetadata"><span>SNAP ID</span><b>NONE</b><span>CAPTURE TIME</span><b>—</b></div>
+            <label class="field-label" for="snapshotNotes">OPERATOR NOTES</label><textarea id="snapshotNotes" class="field" rows="3" placeholder="Optional notes for this snapshot…"></textarea>
+            <p class="micro-note">The saved source frame is stored locally. A selected face crop is saved separately when available.</p>
+          </div>
+          <div class="snapshot-right panel">
+            <div class="panel-heading"><span>PRIMARY ASSET / DOSSIER</span><span class="tiny-code">LOCAL RECORD</span></div>
+            <div id="snapshotDossier" class="dossier-placeholder"><div class="mini-reticle"></div><b>NO SNAPSHOT LOADED</b><p>Capture a frame in Live Feed to populate the dossier.</p></div>
+            <div id="snapshotDossierData" hidden>
+              <div class="dossier-header">PRIMARY ASSET IDENTIFIED <span>DEMO / LOCAL</span></div>
+              <div class="dossier-row"><span>SUBJECT ID</span><b id="dossierTrack">—</b></div>
+              <div class="dossier-row"><span>ALIAS</span><b id="dossierAlias">UNASSIGNED</b></div>
+              <div class="dossier-row"><span>CLASSIFICATION</span><b id="dossierClass">UNCLASSIFIED</b></div>
+              <div class="dossier-row"><span>ADMIN STATUS</span><b id="dossierAdmin">UNKNOWN</b></div>
+              <div class="dossier-row"><span>CAPTURE TIME</span><b id="dossierTime">—</b></div>
+              <div class="dossier-row"><span>PROFILE</span><b id="dossierAsset">NOT LINKED</b></div>
+              <div class="dossier-warning">IDENTITY / CLASSIFICATION DATA IS OPERATOR-SUPPLIED</div>
+            </div>
+            <button id="openSnapshotFolderHint" class="btn btn-quiet full" disabled>SNAPSHOT STORED LOCALLY</button>
+          </div>
+        </div>
+        <section class="panel snapshot-history-panel"><div class="panel-heading"><span>RECENT SNAPSHOTS</span><span class="tiny-code">LOCAL ARCHIVE</span></div><div id="snapshotHistory" class="snapshot-history"><div class="quiet-empty">No snapshots saved in this session.</div></div></section>
+      </section>
+
+      <section class="view-page" id="view-registry">
+        <div class="registry-toolbar"><div><div class="eyebrow">PROFILE MANAGEMENT</div><h2>ASSET REGISTRY</h2><p>Biometric templates are local and opt-in. Match candidates require cooperative enrollment; expansion samples require operator approval.</p></div><button id="registryRegisterBtn" class="btn btn-primary">＋ NEW ASSET FROM LIVE TRACK</button></div>
+        <section class="panel candidate-review-panel">
+          <div class="panel-heading"><span>BIOMETRIC TEMPLATE EXPANSION REVIEW</span><span id="candidateQueueCount" class="tiny-code">0 PENDING</span></div>
+          <p class="micro-note">High-similarity samples from opted-in profiles can be queued for review. They are never added to active matching until approved here.</p>
+          <div id="biometricCandidates" class="candidate-list"><div class="quiet-empty">No pending samples.</div></div>
+        </section>
+        <div class="registry-filter"><input id="assetSearch" class="field" type="search" autocomplete="off" placeholder="Search ID, alias, class, ADMIN tag or notes…" aria-label="Search registered assets"><span id="assetCount" class="tiny-code">0 ASSETS</span></div>
+        <div id="assetGrid" class="asset-grid"><div class="quiet-empty">No assets registered. Select a visible face in Live Feed and choose “Register new asset”.</div></div>
+        <div class="protocol-card"><b>REGISTRATION PROTOCOL</b><p>Register only participants who have explicitly agreed to local biometric matching. The engine uses a cooperative initial scan. Optional expansion captures remain pending until an operator approves them. THREAT and other role labels are always operator-supplied, never inferred from a face.</p><button id="protocolBtn" class="btn btn-quiet">VIEW REGISTRATION PROTOCOL</button></div>
+      </section>
+
+      <footer class="stage-footer"><div><span class="tiny-code">SYSTEM STATUS</span><span class="footer-separator"></span><span class="footer-led"></span><span id="footerStatus">IDLE</span><span class="footer-separator"></span><span>DB: <b>SQLITE LOCAL</b></span><span class="footer-separator"></span><span>REMOTE: <b>DISABLED</b></span></div><div class="footer-motto">OBSERVE / LABEL MANUALLY / VERIFY</div></footer>
+    </section>
+  </main>
+
+  <div id="assetModal" class="modal-backdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-titlebar"><div><div class="eyebrow">ASSET REGISTRATION PROTOCOL</div><h2 id="modalTitle">REGISTER NEW ASSET</h2></div><button id="closeModal" class="close-modal" aria-label="Close">×</button></div>
+      <form id="assetForm">
+        <input type="hidden" id="editAssetId">
+        <input type="hidden" id="formTrackId">
+        <div id="registrationContext" class="registration-context">No selected live face.</div>
+        <label class="field-label" for="assetAlias">ALIAS / DISPLAY NAME *</label><input id="assetAlias" class="field" required maxlength="100" placeholder="e.g. Operator Alpha / Demo Subject 01">
+        <div class="form-two-col"><div><label class="field-label" for="assetClassification">CLASSIFICATION *</label><select id="assetClassification" class="field"><option value="UNCLASSIFIED">Gray · Unclassified</option><option value="ADMIN">Yellow · Admin</option><option value="THREAT">Red · Threat (manual tag)</option><option value="VIOLENCE_INDICATOR">White / red · Violence indicator (manual)</option><option value="MACHINE_AWARE">Yellow dashed · Machine-aware</option><option value="ANALOG_INTERFACE">Yellow corners · Analog interface</option><option value="ASSET">Blue · Asset</option><option value="PERSON_OF_INTEREST">Amber · Person of interest (manual)</option></select></div><div><label class="field-label" for="assetAdmin">ADMIN TAG</label><select id="assetAdmin" class="field"><option value="false">No / not assigned</option><option value="true">Yes · ADMIN</option></select></div></div>
+        <label class="field-label" for="assetNotes">DOSSIER NOTES</label><textarea id="assetNotes" class="field" rows="4" maxlength="3000" placeholder="Operator-supplied notes. Avoid unnecessary sensitive information."></textarea>
+        <section class="biometric-optin-box">
+          <div class="field-label">OPTIONAL BIOMETRIC MATCHING</div>
+          <label class="consent-row"><input type="checkbox" id="biometricOptIn"><span>Enable local face matching for this profile. Use only for a participant who has explicitly opted in.</span></label>
+          <label class="consent-row"><input type="checkbox" id="autoExpandOptIn" disabled><span>Allow high-match samples to enter a review queue for possible template expansion. Samples are never activated automatically.</span></label>
+          <label id="biometricConsentRow" class="consent-row" hidden><input type="checkbox" id="biometricConsentAck"><span>I confirm the participant explicitly consented to local biometric matching and storage of derived face templates.</span></label>
+        </section>
+        <div id="consentRow"><div class="field-label">IMAGE STORAGE AUTHORIZATION *</div><label class="consent-row"><input type="checkbox" id="consentAck"><span>I confirm I am authorized to save this face crop and the manually supplied profile data. This confirmation is not the asset classification or ADMIN tag.</span></label></div>
+        <div class="modal-warning">Biometric matching is optional and local. It compares an enrolled profile only after cooperative registration. Scores are not probabilities; false matches remain possible. Threat and role labels must be assigned manually.</div>
+        <div class="modal-actions"><button type="button" id="cancelModal" class="btn btn-quiet">CANCEL</button><button type="submit" id="saveAssetBtn" class="btn btn-yellow">SAVE ASSET</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/js/app.js" defer></script>
+</body>
+</html>
